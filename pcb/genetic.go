@@ -111,6 +111,7 @@ func (pgo *PcbGeneticOperators) globalMutation(i *Pcb, c *genetic.GeneticContext
 		if c.RandomGenerator.Float64() < pgo.mutateSinglePointProb {
 			component := &i.Genome.Components[j]
 			CX, CY := GetComponentRandomPositionInBoundaries(component, pgo.maxX, pgo.maxY, c.RandomGenerator)
+			component.Rotation = c.RandomGenerator.Float64() * 360
 			MoveComponent(i.Genome.Nodes, component, CX, CY)
 		}
 	}

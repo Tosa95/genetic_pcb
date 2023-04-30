@@ -41,13 +41,14 @@ type ComponentNode struct {
 }
 
 type Component struct {
-	Nodes []ComponentNode
-	X1    float64
-	Y1    float64
-	X2    float64
-	Y2    float64
-	CX    float64
-	CY    float64
+	Nodes    []ComponentNode
+	X1       float64
+	Y1       float64
+	X2       float64
+	Y2       float64
+	CX       float64
+	CY       float64
+	Rotation float64
 }
 
 func (c *Component) copy() *Component {
@@ -55,13 +56,14 @@ func (c *Component) copy() *Component {
 	copy(nodes, c.Nodes)
 
 	return &Component{
-		Nodes: nodes,
-		X1:    c.X1,
-		Y1:    c.Y1,
-		X2:    c.X2,
-		Y2:    c.Y2,
-		CX:    c.CX,
-		CY:    c.CY,
+		Nodes:    nodes,
+		X1:       c.X1,
+		Y1:       c.Y1,
+		X2:       c.X2,
+		Y2:       c.Y2,
+		CX:       c.CX,
+		CY:       c.CY,
+		Rotation: c.Rotation,
 	}
 }
 
@@ -131,12 +133,17 @@ func componentToPoly(c *Component) *geom.Polygon {
 	finalX2 := c.CX + c.X2
 	finalY2 := c.CY + c.Y2
 
+	p1X, p1Y := geo.RotatePoint(finalX1, finalY1, c.CX, c.CY, c.Rotation)
+	p2X, p2Y := geo.RotatePoint(finalX2, finalY1, c.CX, c.CY, c.Rotation)
+	p3X, p3Y := geo.RotatePoint(finalX2, finalY2, c.CX, c.CY, c.Rotation)
+	p4X, p4Y := geo.RotatePoint(finalX1, finalY2, c.CX, c.CY, c.Rotation)
+
 	return geom.NewPolygonFlat(geom.XY, []float64{
-		finalX1, finalY1,
-		finalX2, finalY1,
-		finalX2, finalY2,
-		finalX1, finalY2,
-		finalX1, finalY1,
+		p1X, p1Y,
+		p2X, p2Y,
+		p3X, p3Y,
+		p4X, p4Y,
+		p1X, p1Y,
 	}, []int{10})
 }
 
@@ -297,6 +304,15 @@ func EvaluatePcb(pcb *Pcb, minDist float64) float64 {
 		}
 	}
 
+	for i1, c1 := range pcb.Geometry.Components {
+		for i2, c2 := range pcb.Geometry.Components {
+			if i1 != i2 && geo.PolyDistance(c1, c2) < minDist {
+				// fmt.Printf("ne %v %v %v %v\n", i1, i2, geo.PolyDistance(n, e), pcb.Genome.Edges[i2])
+				violatedConstraints += 1.0
+			}
+		}
+	}
+
 	return -violatedConstraints
 
 }
@@ -380,6 +396,8 @@ func MoveComponent(nodes []Node, c *Component, X, Y float64) {
 	for _, n := range c.Nodes {
 		nodes[n.Node].X = c.CX + n.DX
 		nodes[n.Node].Y = c.CY + n.DY
+
+		nodes[n.Node].X, nodes[n.Node].Y = geo.RotatePoint(nodes[n.Node].X, nodes[n.Node].Y, c.CX, c.CY, c.Rotation)
 	}
 }
 
