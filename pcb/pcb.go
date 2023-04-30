@@ -10,13 +10,18 @@ import (
 	"math/rand"
 	"sort"
 
+	"github.com/llgcode/draw2d"
 	"github.com/llgcode/draw2d/draw2dimg"
 	"github.com/twpayne/go-geom"
+
+	"github.com/golang/freetype"
+	"golang.org/x/image/font/gofont/goregular"
 )
 
 type Node struct {
-	X float64
-	Y float64
+	X         float64
+	Y         float64
+	Component int
 }
 
 type Edge struct {
@@ -43,6 +48,21 @@ type Component struct {
 	Y2    float64
 	CX    float64
 	CY    float64
+}
+
+func (c *Component) copy() *Component {
+	nodes := make([]ComponentNode, len(c.Nodes))
+	copy(nodes, c.Nodes)
+
+	return &Component{
+		Nodes: nodes,
+		X1:    c.X1,
+		Y1:    c.Y1,
+		X2:    c.X2,
+		Y2:    c.Y2,
+		CX:    c.CX,
+		CY:    c.CY,
+	}
 }
 
 type Genome struct {
@@ -78,7 +98,10 @@ func (g *Genome) copy() *Genome {
 	copy(nets, g.Nets)
 
 	components := make([]Component, len(g.Components))
-	copy(components, g.Components)
+
+	for i := range components {
+		components[i] = *g.Components[i].copy()
+	}
 
 	return &Genome{
 		Nodes:      nodes,
@@ -99,7 +122,7 @@ func (n *Net) copy() *Net {
 
 func nodeToPoly(x, y, nodeSz float64) *geom.Polygon {
 	halfSz := nodeSz / 2
-	return geom.NewPolygonFlat(geom.XY, []float64{x - halfSz, y - halfSz, x + halfSz, y - halfSz, x + halfSz, y + halfSz, x - halfSz, y + halfSz}, []int{8})
+	return geom.NewPolygonFlat(geom.XY, []float64{x - halfSz, y - halfSz, x + halfSz, y - halfSz, x + halfSz, y + halfSz, x - halfSz, y + halfSz, x - halfSz, y - halfSz}, []int{10})
 }
 
 func componentToPoly(c *Component) *geom.Polygon {
@@ -113,7 +136,8 @@ func componentToPoly(c *Component) *geom.Polygon {
 		finalX2, finalY1,
 		finalX2, finalY2,
 		finalX1, finalY2,
-	}, []int{8})
+		finalX1, finalY1,
+	}, []int{10})
 }
 
 func edgeToPoly(from, to int, nodes []Node, edgeSz float64) *geom.Polygon {
@@ -123,9 +147,19 @@ func edgeToPoly(from, to int, nodes []Node, edgeSz float64) *geom.Polygon {
 	x2, y2 := nodes[to].X, nodes[to].Y
 	xs, ys := x2-x1, y2-y1
 	xp := 1.0
-	yp := -(xs / ys) * xp
+	yp := 0.0
+	if ys != 0 {
+		yp = -(xs / ys) * xp
+	} else {
+		xp = 0.0
+		yp = 1.0
+	}
+
 	pNorm := math.Sqrt(xp*xp + yp*yp)
 
+	if pNorm == 0 {
+		return geom.NewPolygonFlat(geom.XY, []float64{x1, y1, x2, y1, x2, y2, x1, y2, x1, y1}, []int{10})
+	}
 	xp = (xp / pNorm) * (edgeSz / 2)
 	yp = (yp / pNorm) * (edgeSz / 2)
 
@@ -190,16 +224,30 @@ func DrawPcbToImage(pcb *Pcb, imgPath string, imgW, imgH int, sx, sy float64, ne
 
 	gc.SetLineWidth(0)
 
+	fontData := goregular.TTF
+	font, err := freetype.ParseFont(fontData)
+	if err != nil {
+		panic(err)
+	}
+
+	gc.SetFont(font)
+	gc.SetFontSize(50)
+
 	for i, edge := range pcb.Geometry.Edges {
 		color := netColors[pcb.Genome.Edges[i].Net%len(netColors)]
 		gc.SetFillColor(color)
 		draw.DrawPoly(gc, edge, sx, sy, true)
 	}
 
-	gc.SetFillColor(color.RGBA{255, 0, 0, 255})
-
-	for _, node := range pcb.Geometry.Nodes {
+	for i, node := range pcb.Geometry.Nodes {
+		gc.SetFillColor(color.RGBA{255, 0, 0, 255})
 		draw.DrawPoly(gc, node, sx, sy, true)
+		gc.SetFillColor(color.RGBA{200, 200, 200, 255})
+		// gc.FontCache = yourFontCache
+		gc.FontCache = draw2d.NewFolderFontCache("C:\\Users\\david\\st\\prj\\genetic_pcb\\resource\\font")
+		// gc.FontCache = draw2d.GetGlobalFontCache()
+		gc.SetFontSize(10)
+		gc.FillStringAt(fmt.Sprintf("%v", i), pcb.Genome.Nodes[i].X, pcb.Genome.Nodes[i].Y)
 	}
 
 	gc.SetFillColor(color.RGBA{255, 255, 255, 0})
@@ -220,7 +268,7 @@ func EvaluatePcb(pcb *Pcb, minDist float64) float64 {
 
 	for i1, n1 := range pcb.Geometry.Nodes {
 		for i2, n2 := range pcb.Geometry.Nodes {
-			if i1 != i2 {
+			if i1 != i2 && pcb.Genome.Nodes[i1].Component != pcb.Genome.Nodes[i1].Component {
 				if geo.PolyDistance(n1, n2) < minDist {
 					// fmt.Printf("nn %v %v\n", i1, i2)
 					violatedConstraints += 0.5
@@ -243,7 +291,7 @@ func EvaluatePcb(pcb *Pcb, minDist float64) float64 {
 	for i1, n := range pcb.Geometry.Nodes {
 		for i2, e := range pcb.Geometry.Edges {
 			if !(pcb.Genome.IsNodeOnEdge(i1, i2)) && geo.PolyDistance(n, e) < minDist {
-				// fmt.Printf("ne %v %v\n", i1, i2)
+				// fmt.Printf("ne %v %v %v %v\n", i1, i2, geo.PolyDistance(n, e), pcb.Genome.Edges[i2])
 				violatedConstraints += 1.0
 			}
 		}
@@ -323,4 +371,21 @@ func SortPcbEdges(pcb *Pcb) {
 
 		return e1.Net < e2.Net
 	})
+}
+
+func MoveComponent(nodes []Node, c *Component, X, Y float64) {
+	c.CX = X
+	c.CY = Y
+
+	for _, n := range c.Nodes {
+		nodes[n.Node].X = c.CX + n.DX
+		nodes[n.Node].Y = c.CY + n.DY
+	}
+}
+
+func GetComponentRandomPositionInBoundaries(c *Component, maxX, maxY float64, randomGenerator *rand.Rand) (float64, float64) {
+	maxXDisplacement := (maxX - (c.X2 - c.CX) - (c.CX - c.X1))
+	maxYDisplacement := (maxY - (c.Y2 - c.CY) - (c.CY - c.Y1))
+
+	return randomGenerator.Float64()*maxXDisplacement - c.X1, randomGenerator.Float64()*maxYDisplacement - c.Y1
 }

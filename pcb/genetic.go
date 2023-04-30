@@ -62,17 +62,24 @@ func (pgo *PcbGeneticOperators) Evaluate(i *Pcb, c *genetic.GeneticContext) floa
 	return fitness
 }
 
+func (pgo *PcbGeneticOperators) copyComponentNodesToChild(c *Genome, p *Genome, component int) {
+	for i := 0; i < len(p.Components[component].Nodes); i++ {
+		nI := p.Components[component].Nodes[i].Node
+		c.Nodes[nI] = p.Nodes[nI]
+	}
+}
+
 func (pgo *PcbGeneticOperators) CrossOver(i1 *Pcb, i2 *Pcb, c *genetic.GeneticContext) *Pcb {
 	child := i1.Genome.copy()
-	// fmt.Println(i1.String())
 
-	for i := 0; i < len(i1.Genome.Nodes); i++ {
+	for i := 0; i < len(i1.Genome.Components); i++ {
 		v := c.RandomGenerator.Float64()
-
 		if v < 0.5 {
-			child.Nodes[i] = i1.Genome.Nodes[i]
+			pgo.copyComponentNodesToChild(child, i1.Genome, i)
+			child.Components[i] = *i1.Genome.Components[i].copy()
 		} else {
-			child.Nodes[i] = i2.Genome.Nodes[i]
+			pgo.copyComponentNodesToChild(child, i2.Genome, i)
+			child.Components[i] = *i2.Genome.Components[i].copy()
 		}
 	}
 
@@ -100,9 +107,11 @@ func (pgo *PcbGeneticOperators) CrossOver(i1 *Pcb, i2 *Pcb, c *genetic.GeneticCo
 }
 
 func (pgo *PcbGeneticOperators) globalMutation(i *Pcb, c *genetic.GeneticContext) {
-	for j := 0; j < len(i.Genome.Nodes); j++ {
+	for j := range i.Genome.Components {
 		if c.RandomGenerator.Float64() < pgo.mutateSinglePointProb {
-			i.Genome.Nodes[j] = Node{X: c.RandomGenerator.Float64() * pgo.maxX, Y: c.RandomGenerator.Float64() * pgo.maxY}
+			component := &i.Genome.Components[j]
+			CX, CY := GetComponentRandomPositionInBoundaries(component, pgo.maxX, pgo.maxY, c.RandomGenerator)
+			MoveComponent(i.Genome.Nodes, component, CX, CY)
 		}
 	}
 }
@@ -148,7 +157,7 @@ func (pgo *PcbGeneticOperators) Mutate(i *Pcb, c *genetic.GeneticContext) {
 
 		switch chosen {
 		case 0:
-			pgo.localMutation(i, c)
+			// pgo.localMutation(i, c)
 			// fmt.Println("LOCAL")
 		case 1:
 			pgo.netMutation(i, c)

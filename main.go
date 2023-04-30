@@ -5,6 +5,8 @@ import (
 	"genetic_pcb/genetic"
 	"genetic_pcb/pcb"
 	"image/color"
+	"math/rand"
+	"time"
 )
 
 func main() {
@@ -12,26 +14,25 @@ func main() {
 
 	maxX, maxY := 500.0, 500.0
 	nodeSz, edgeSz := 10.0, 5.0
-
-	// p := pcb.GeneratePcb(25, 40, maxX, maxY)
-	p := pcb.GeneratePcbWithNets(5, 6, maxX, maxY)
 	N := 1000
-	initialPop := make([]*pcb.Pcb, N)
 
-	p.Genome.Components = []pcb.Component{
+	componentTemplates := []pcb.Component{
+		// Resistor
 		{
-			Nodes: []pcb.ComponentNode{{0, 9, 0}},
-			X1:    -30,
-			Y1:    -30,
-			X2:    30,
-			Y2:    30,
-			CX:    100,
-			CY:    100,
+			Nodes: []pcb.ComponentNode{{DX: -15, DY: 0}, {DX: 15, DY: 0}},
+			X1:    -25,
+			Y1:    -10,
+			X2:    25,
+			Y2:    10,
 		},
-	}
-
-	for i := 0; i < N; i++ {
-		initialPop[i] = pcb.ScrumblePcb(p, maxX, maxY)
+		// Transistor
+		{
+			Nodes: []pcb.ComponentNode{{DX: -30, DY: 0}, {DX: 0, DY: 0}, {DX: 30, DY: 0}},
+			X1:    -40,
+			Y1:    -10,
+			X2:    40,
+			Y2:    10,
+		},
 	}
 
 	netColors := []color.Color{
@@ -43,24 +44,55 @@ func main() {
 		&color.RGBA{30, 100, 150, 255},
 	}
 
+	s1 := rand.NewSource(time.Now().UnixNano())
+	randomGenerator := rand.New(s1)
+
+	p1 := pcb.GeneratePcbFull(componentTemplates, 10, 4, maxX, maxY, randomGenerator)
+	p2 := pcb.ScrumblePcb(p1, maxX, maxY)
+	pgo := pcb.NewPcbGeneticOperators(
+		1,
+		0.2,
+		0.5,
+		1,
+		maxX,
+		maxY,
+		nodeSz,
+		edgeSz,
+		50,
+		0.0,
+		0.3,
+		0.0, // was 0.01
+	)
+	ctx := genetic.NewGeneticContext()
+	c := pgo.CrossOver(p1, p2, ctx)
+	fmt.Printf("%+v\n", p1.Genome)
+
+	p1.ComputeGeometry(nodeSz, edgeSz)
+	p2.ComputeGeometry(nodeSz, edgeSz)
+	c.ComputeGeometry(nodeSz, edgeSz)
+
+	pgo.Evaluate(c, ctx)
+
+	pcb.DrawPcbToImage(p1, "p1.png", int(maxX), int(maxY), 1, 1, netColors)
+	pcb.DrawPcbToImage(p2, "p2.png", int(maxX), int(maxY), 1, 1, netColors)
+	pcb.DrawPcbToImage(c, "c.png", int(maxX), int(maxY), 1, 1, netColors)
+
+	// // // p := pcb.GeneratePcb(25, 40, maxX, maxY)
+	// // p := pcb.GeneratePcbWithNets(5, 6, maxX, maxY)
+	// N := 1000
+	// initialPop := make([]*pcb.Pcb, N)
+
+	initialPop := make([]*pcb.Pcb, N)
+
+	for i := 0; i < N; i++ {
+		initialPop[i] = pcb.ScrumblePcb(p1, maxX, maxY)
+	}
+
 	ga := genetic.NewGeneticAlgorithm[*pcb.Pcb](
 		initialPop,
 		10,
 		0.1,
-		pcb.NewPcbGeneticOperators(
-			1,
-			0.05,
-			0.5,
-			10,
-			maxX,
-			maxY,
-			nodeSz,
-			edgeSz,
-			50,
-			0.5,
-			0.1,
-			0.1,
-		),
+		pgo,
 		10,
 		0.1,
 	)

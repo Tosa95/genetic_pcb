@@ -22,10 +22,10 @@ func TestEvaluatePcb1(t *testing.T) {
 		t,
 		pcb.Genome{
 			Nodes: []pcb.Node{
-				{10, 10},
-				{50, 11},
-				{100, 100},
-				{83, 12},
+				{10, 10, 0},
+				{50, 11, 0},
+				{100, 100, 0},
+				{83, 12, 0},
 			},
 			Edges: []pcb.Edge{
 				{From: 0, To: 1},
@@ -42,10 +42,10 @@ func TestEvaluatePcb2(t *testing.T) {
 		t,
 		pcb.Genome{
 			Nodes: []pcb.Node{
-				{10, 10},
-				{50, 11},
-				{100, 100},
-				{63, 12},
+				{10, 10, 0},
+				{50, 11, 0},
+				{100, 100, 0},
+				{63, 12, 0},
 			},
 			Edges: []pcb.Edge{
 				{From: 0, To: 1},
@@ -62,11 +62,11 @@ func TestEvaluatePcb3(t *testing.T) {
 		t,
 		pcb.Genome{
 			Nodes: []pcb.Node{
-				{10, 10},
-				{50, 11},
-				{100, 100},
-				{103, 12},
-				{22, 72},
+				{10, 10, 0},
+				{50, 11, 0},
+				{100, 100, 0},
+				{103, 12, 0},
+				{22, 72, 0},
 			},
 			Edges: []pcb.Edge{
 				{From: 0, To: 1},
@@ -83,11 +83,11 @@ func TestEvaluatePcb4(t *testing.T) {
 		t,
 		pcb.Genome{
 			Nodes: []pcb.Node{
-				{10, 10},
-				{50, 11},
-				{100, 100},
-				{194, 12},
-				{82, 172},
+				{10, 10, 0},
+				{50, 11, 0},
+				{100, 100, 0},
+				{194, 12, 0},
+				{82, 172, 0},
 			},
 			Edges: []pcb.Edge{
 				{From: 0, To: 1},
@@ -104,11 +104,11 @@ func TestEvaluatePcb5(t *testing.T) {
 		t,
 		pcb.Genome{
 			Nodes: []pcb.Node{
-				{10, 10},
-				{50, 11},
-				{100, 100},
-				{194, 12},
-				{52, 172},
+				{10, 10, 0},
+				{50, 11, 0},
+				{100, 100, 0},
+				{194, 12, 0},
+				{52, 172, 0},
 			},
 			Edges: []pcb.Edge{
 				{From: 0, To: 1},
