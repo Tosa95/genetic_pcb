@@ -47,7 +47,7 @@ func main() {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	randomGenerator := rand.New(s1)
 
-	p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
+	p1 := pcb.GeneratePcbFull(componentTemplates, 10, 3, maxX, maxY, randomGenerator)
 	p2 := pcb.ScrumblePcb(p1, maxX, maxY)
 	pgo := pcb.NewPcbGeneticOperators(
 		1,
@@ -59,8 +59,12 @@ func main() {
 		nodeSz,
 		edgeSz,
 		50,
-		0.0,
-		0.3,
+		pcb.MutationWeights{
+			GlobalMutationWeight:                  1,
+			RegenerateNetMutationWeight:           1,
+			TranslateComponentGroupMutationWeight: 1,
+			RotateComponentMutationWeight:         1,
+		},
 		0.01, // was 0.01
 	)
 	ctx := genetic.NewGeneticContext()

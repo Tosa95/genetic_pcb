@@ -389,10 +389,7 @@ func SortPcbEdges(pcb *Pcb) {
 	})
 }
 
-func MoveComponent(nodes []Node, c *Component, X, Y float64) {
-	c.CX = X
-	c.CY = Y
-
+func PlaceComponentNodes(nodes []Node, c *Component) {
 	for _, n := range c.Nodes {
 		nodes[n.Node].X = c.CX + n.DX
 		nodes[n.Node].Y = c.CY + n.DY

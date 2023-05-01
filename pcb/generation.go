@@ -93,8 +93,8 @@ func GeneratePcbFull(componentTemplates []Component, componentN, netN int, maxX,
 
 		}
 
-		CX, CY := GetComponentRandomPositionInBoundaries(c, maxX, maxY, randomGenerator)
-		MoveComponent(pcb.Genome.Nodes, c, CX, CY)
+		c.CX, c.CY = GetComponentRandomPositionInBoundaries(c, maxX, maxY, randomGenerator)
+		PlaceComponentNodes(pcb.Genome.Nodes, c)
 
 		pcb.Genome.Components[i] = *c
 	}
@@ -123,8 +123,8 @@ func ScrumblePcb(original *Pcb, maxX, maxY float64) *Pcb {
 
 	for i := 0; i < len(res.Components); i++ {
 		c := &res.Components[i]
-		CX, CY := GetComponentRandomPositionInBoundaries(c, maxX, maxY, randomGenerator)
-		MoveComponent(res.Nodes, c, CX, CY)
+		c.CX, c.CY = GetComponentRandomPositionInBoundaries(c, maxX, maxY, randomGenerator)
+		PlaceComponentNodes(res.Nodes, c)
 	}
 
 	return NewPcb(res)

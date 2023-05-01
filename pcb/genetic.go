@@ -7,19 +7,25 @@ import (
 	"github.com/mroth/weightedrand/v2"
 )
 
+type MutationWeights struct {
+	GlobalMutationWeight                  int
+	TranslateComponentGroupMutationWeight int
+	RegenerateNetMutationWeight           int
+	RotateComponentMutationWeight         int
+}
+
 type PcbGeneticOperators struct {
-	fitnessExp            float64
-	mutateProb            float64
-	mutateSinglePointProb float64
-	minDist               float64
-	maxX                  float64
-	maxY                  float64
-	nodeSz                float64
-	edgeSz                float64
-	localMutationMaxDelta float64
-	localMutationProb     float64
-	netMutationProb       float64
-	edgeLengthPenalty     float64
+	fitnessExp                float64
+	mutateProb                float64
+	mutateSingleComponentProb float64
+	minDist                   float64
+	maxX                      float64
+	maxY                      float64
+	nodeSz                    float64
+	edgeSz                    float64
+	localMutationMaxDelta     float64
+	mutationWeights           MutationWeights
+	edgeLengthPenalty         float64
 }
 
 func NewPcbGeneticOperators(
@@ -32,24 +38,22 @@ func NewPcbGeneticOperators(
 	nodeSz float64,
 	edgeSz float64,
 	localMutationMaxDelta float64,
-	localMutationProb float64,
-	netMutationProb float64,
+	mutationWeights MutationWeights,
 	edgeLengthPenalty float64,
 ) *PcbGeneticOperators {
 
 	pgo := PcbGeneticOperators{
-		fitnessExp:            fitnessExp,
-		mutateProb:            mutateProb,
-		mutateSinglePointProb: mutateSinglePointProb,
-		minDist:               minDist,
-		maxX:                  maxX,
-		maxY:                  maxY,
-		nodeSz:                nodeSz,
-		edgeSz:                edgeSz,
-		localMutationMaxDelta: localMutationMaxDelta,
-		localMutationProb:     localMutationProb,
-		netMutationProb:       netMutationProb,
-		edgeLengthPenalty:     edgeLengthPenalty,
+		fitnessExp:                fitnessExp,
+		mutateProb:                mutateProb,
+		mutateSingleComponentProb: mutateSinglePointProb,
+		minDist:                   minDist,
+		maxX:                      maxX,
+		maxY:                      maxY,
+		nodeSz:                    nodeSz,
+		edgeSz:                    edgeSz,
+		localMutationMaxDelta:     localMutationMaxDelta,
+		mutationWeights:           mutationWeights,
+		edgeLengthPenalty:         edgeLengthPenalty,
 	}
 
 	return &pgo
@@ -108,11 +112,39 @@ func (pgo *PcbGeneticOperators) CrossOver(i1 *Pcb, i2 *Pcb, c *genetic.GeneticCo
 
 func (pgo *PcbGeneticOperators) globalMutation(i *Pcb, c *genetic.GeneticContext) {
 	for j := range i.Genome.Components {
-		if c.RandomGenerator.Float64() < pgo.mutateSinglePointProb {
+		if c.RandomGenerator.Float64() < pgo.mutateSingleComponentProb {
 			component := &i.Genome.Components[j]
-			CX, CY := GetComponentRandomPositionInBoundaries(component, pgo.maxX, pgo.maxY, c.RandomGenerator)
+			component.CX, component.CY = GetComponentRandomPositionInBoundaries(component, pgo.maxX, pgo.maxY, c.RandomGenerator)
 			component.Rotation = c.RandomGenerator.Float64() * 360
-			MoveComponent(i.Genome.Nodes, component, CX, CY)
+			PlaceComponentNodes(i.Genome.Nodes, component)
+		}
+	}
+}
+
+func (pgo *PcbGeneticOperators) translateComponentGroup(i *Pcb, c *genetic.GeneticContext) {
+	DX, DY := (c.RandomGenerator.Float64()-0.5)*pgo.maxX*0.1, (c.RandomGenerator.Float64()-0.5)*pgo.maxY*0.1
+
+	for j := range i.Genome.Components {
+		if c.RandomGenerator.Float64() < pgo.mutateSingleComponentProb {
+			component := &i.Genome.Components[j]
+			newX, newY := component.CX+DX, component.CY+DY
+
+			if newX >= 0 && newX < pgo.maxX && newY >= 0 && newY < pgo.maxY {
+				component.CX, component.CY = component.CX+DX, component.CY+DY
+				PlaceComponentNodes(i.Genome.Nodes, component)
+			}
+
+		}
+
+	}
+}
+
+func (pgo *PcbGeneticOperators) rotateComponent(i *Pcb, c *genetic.GeneticContext) {
+	for j := range i.Genome.Components {
+		if c.RandomGenerator.Float64() < pgo.mutateSingleComponentProb {
+			component := &i.Genome.Components[j]
+			component.Rotation = c.RandomGenerator.Float64() * 360
+			PlaceComponentNodes(i.Genome.Nodes, component)
 		}
 	}
 }
@@ -148,25 +180,15 @@ func (pgo *PcbGeneticOperators) netMutation(i *Pcb, c *genetic.GeneticContext) {
 
 func (pgo *PcbGeneticOperators) Mutate(i *Pcb, c *genetic.GeneticContext) {
 	chooser, _ := weightedrand.NewChooser(
-		weightedrand.NewChoice(0, int(pgo.localMutationProb*100)),
-		weightedrand.NewChoice(1, int(pgo.netMutationProb*100)),
-		weightedrand.NewChoice(2, int((1.0-(pgo.netMutationProb+pgo.localMutationProb))*100)),
+		weightedrand.NewChoice(pgo.globalMutation, pgo.mutationWeights.GlobalMutationWeight),
+		weightedrand.NewChoice(pgo.netMutation, pgo.mutationWeights.RegenerateNetMutationWeight),
+		weightedrand.NewChoice(pgo.translateComponentGroup, pgo.mutationWeights.TranslateComponentGroupMutationWeight),
+		weightedrand.NewChoice(pgo.rotateComponent, pgo.mutationWeights.RotateComponentMutationWeight),
 	)
 
 	if c.RandomGenerator.Float64() < pgo.mutateProb {
-		chosen := chooser.Pick()
-
-		switch chosen {
-		case 0:
-			// pgo.localMutation(i, c)
-			// fmt.Println("LOCAL")
-		case 1:
-			pgo.netMutation(i, c)
-			// fmt.Println("NET")
-		case 2:
-			pgo.globalMutation(i, c)
-			// fmt.Println("GLOBAL")
-		}
+		mutation := chooser.Pick()
+		mutation(i, c)
 	}
 
 }
