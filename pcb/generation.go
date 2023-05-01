@@ -100,10 +100,12 @@ func GeneratePcbFull(componentTemplates []Component, componentN, netN int, maxX,
 	}
 
 	// Randomly assign each node to a net
+	for _, c := range pcb.Genome.Components {
+		nets := randomGenerator.Perm(netN)[:len(c.Nodes)]
+		for i, cn := range c.Nodes {
+			pcb.Genome.Nets[nets[i]].Nodes = append(pcb.Genome.Nets[nets[i]].Nodes, cn.Node)
+		}
 
-	for i := range pcb.Genome.Nodes {
-		net := randomGenerator.Intn(netN)
-		pcb.Genome.Nets[net].Nodes = append(pcb.Genome.Nets[net].Nodes, i)
 	}
 
 	for i := range pcb.Genome.Nets {
