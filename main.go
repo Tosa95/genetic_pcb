@@ -36,19 +36,22 @@ func main() {
 	}
 
 	netColors := []color.Color{
-		&color.RGBA{0, 255, 0, 255},
-		&color.RGBA{0, 0, 255, 255},
-		&color.RGBA{0, 128, 128, 255},
-		&color.RGBA{100, 20, 128, 255},
-		&color.RGBA{200, 100, 100, 255},
-		&color.RGBA{30, 100, 150, 255},
+		&color.RGBA{0x1F, 0x77, 0xB4, 0xFF},
+		&color.RGBA{0xFF, 0x7F, 0x0E, 0xFF},
+		&color.RGBA{0x2C, 0xA0, 0x2C, 0xFF},
+		&color.RGBA{0xD6, 0x27, 0x28, 0xFF},
+		&color.RGBA{0x94, 0x67, 0xBD, 0xFF},
+		&color.RGBA{0x8C, 0x56, 0x46, 0xFF},
+		&color.RGBA{0xE3, 0x77, 0xC2, 0xFF},
+		&color.RGBA{0x7F, 0x7F, 0x7F, 0xFF},
+		&color.RGBA{0xBC, 0xBD, 0x22, 0xFF},
+		&color.RGBA{0x17, 0xBE, 0xCF, 0xFF},
 	}
-
 	s1 := rand.NewSource(time.Now().UnixNano())
 	randomGenerator := rand.New(s1)
 
-	// p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
-	p1 := pcb.GeneratePcbFull(componentTemplates, 7, 3, maxX, maxY, randomGenerator)
+	p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
+	// p1 := pcb.GeneratePcbFull(componentTemplates, 7, 3, maxX, maxY, randomGenerator)
 	p2 := pcb.ScrumblePcb(p1, maxX, maxY)
 	pgo := pcb.NewPcbGeneticOperators(
 		1,
