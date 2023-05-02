@@ -65,6 +65,7 @@ func main() {
 			RegenerateNetMutationWeight:           1,
 			TranslateComponentGroupMutationWeight: 1,
 			RotateComponentMutationWeight:         1,
+			RerouteEdgeMutationWeight:             1,
 		},
 		0.01, // was 0.01
 	)
@@ -81,6 +82,11 @@ func main() {
 	pcb.DrawPcbToImage(p1, "p1.png", int(maxX), int(maxY), 1, 1, netColors)
 	pcb.DrawPcbToImage(p2, "p2.png", int(maxX), int(maxY), 1, 1, netColors)
 	pcb.DrawPcbToImage(c, "c.png", int(maxX), int(maxY), 1, 1, netColors)
+
+	// pgo.MoveEdgeMutation(c, ctx)
+	// c.ComputeGeometry(nodeSz, edgeSz)
+
+	// pcb.DrawPcbToImage(c, "c2.png", int(maxX), int(maxY), 1, 1, netColors)
 
 	// // // p := pcb.GeneratePcb(25, 40, maxX, maxY)
 	// // p := pcb.GeneratePcbWithNets(5, 6, maxX, maxY)
