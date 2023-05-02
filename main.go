@@ -36,16 +36,16 @@ func main() {
 	}
 
 	netColors := []color.Color{
-		&color.RGBA{0x1F, 0x77, 0xB4, 0xFF},
-		&color.RGBA{0xFF, 0x7F, 0x0E, 0xFF},
-		&color.RGBA{0x2C, 0xA0, 0x2C, 0xFF},
-		&color.RGBA{0xD6, 0x27, 0x28, 0xFF},
-		&color.RGBA{0x94, 0x67, 0xBD, 0xFF},
-		&color.RGBA{0x8C, 0x56, 0x46, 0xFF},
-		&color.RGBA{0xE3, 0x77, 0xC2, 0xFF},
-		&color.RGBA{0x7F, 0x7F, 0x7F, 0xFF},
-		&color.RGBA{0xBC, 0xBD, 0x22, 0xFF},
-		&color.RGBA{0x17, 0xBE, 0xCF, 0xFF},
+		&color.RGBA{238, 79, 121, 255},  // Rosa
+		&color.RGBA{75, 139, 190, 255},  // Blu
+		&color.RGBA{87, 178, 158, 255},  // Verde acqua
+		&color.RGBA{249, 147, 79, 255},  // Arancione
+		&color.RGBA{193, 109, 161, 255}, // Viola
+		&color.RGBA{237, 201, 72, 255},  // Giallo
+		&color.RGBA{145, 204, 211, 255}, // Celeste
+		&color.RGBA{106, 141, 59, 255},  // Verde
+		&color.RGBA{209, 86, 66, 255},   // Rosso
+		&color.RGBA{155, 97, 64, 255},   // Marrone
 	}
 	s1 := rand.NewSource(time.Now().UnixNano())
 	randomGenerator := rand.New(s1)
@@ -64,13 +64,16 @@ func main() {
 		edgeSz,
 		50,
 		pcb.MutationWeights{
-			GlobalMutationWeight:                  1,
-			RegenerateNetMutationWeight:           1,
-			TranslateComponentGroupMutationWeight: 1,
-			RotateComponentMutationWeight:         1,
-			RerouteEdgeMutationWeight:             1,
+			GlobalMutationWeight:                  10,
+			RegenerateNetMutationWeight:           10,
+			TranslateComponentGroupMutationWeight: 10,
+			RotateComponentMutationWeight:         10,
+			RerouteEdgeMutationWeight:             10,
+			ChangePlaneMutationWeight:             10,
 		},
 		0.01, // was 0.01
+		0.9,
+		0.09,
 	)
 	ctx := genetic.NewGeneticContext()
 	c := pgo.CrossOver(p1, p2, ctx)
@@ -81,6 +84,8 @@ func main() {
 	c.ComputeGeometry(nodeSz, edgeSz)
 
 	pgo.Evaluate(c, ctx)
+
+	c.Genome.Edges[0].Plane = 1
 
 	pcb.DrawPcbToImage(p1, "p1.png", int(maxX), int(maxY), 1, 1, netColors)
 	pcb.DrawPcbToImage(p2, "p2.png", int(maxX), int(maxY), 1, 1, netColors)

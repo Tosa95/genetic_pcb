@@ -18,6 +18,7 @@ type MutationWeights struct {
 	RegenerateNetMutationWeight           int
 	RotateComponentMutationWeight         int
 	RerouteEdgeMutationWeight             int
+	ChangePlaneMutationWeight             int
 }
 
 func (pgo *PcbGeneticOperators) buildMutationChooser() *mutationChooser {
@@ -27,6 +28,7 @@ func (pgo *PcbGeneticOperators) buildMutationChooser() *mutationChooser {
 		weightedrand.NewChoice(pgo.translateComponentGroup, pgo.mutationWeights.TranslateComponentGroupMutationWeight),
 		weightedrand.NewChoice(pgo.rotateComponent, pgo.mutationWeights.RotateComponentMutationWeight),
 		weightedrand.NewChoice(pgo.rerouteEdge, pgo.mutationWeights.RerouteEdgeMutationWeight),
+		weightedrand.NewChoice(pgo.changePlane, pgo.mutationWeights.ChangePlaneMutationWeight),
 	)
 
 	return chooser
@@ -153,7 +155,18 @@ func (pgo *PcbGeneticOperators) rerouteEdge(i *Pcb, c *genetic.GeneticContext) {
 		i.Genome.Edges[edgeIndex+1:]...,
 	)
 
-	i.Genome.Edges = append(i.Genome.Edges, Edge{From: n1, To: n2, Net: netIndex})
+	i.Genome.Edges = append(i.Genome.Edges, Edge{From: n1, To: n2, Net: netIndex, Plane: edge.Plane})
 
 	SortPcbEdges(i)
+}
+
+func (pgo *PcbGeneticOperators) changePlane(i *Pcb, c *genetic.GeneticContext) {
+	edgeIndex := c.RandomGenerator.Intn(len(i.Genome.Edges))
+	edge := &i.Genome.Edges[edgeIndex]
+
+	if edge.Plane == 0 {
+		edge.Plane = 1
+	} else {
+		edge.Plane = 0
+	}
 }

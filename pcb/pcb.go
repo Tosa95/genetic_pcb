@@ -25,9 +25,10 @@ type Node struct {
 }
 
 type Edge struct {
-	From int
-	To   int
-	Net  int
+	From  int
+	To    int
+	Net   int
+	Plane int
 }
 
 type Net struct {
@@ -224,6 +225,25 @@ func (g *Genome) IsNodeOnEdge(nodeIndex, edgeIndex int) bool {
 	return f == nodeIndex || t == nodeIndex
 }
 
+func reduceLuminosity(originalColor color.Color) color.Color {
+	// Get the RGBA values of the original color
+	originalR, originalG, originalB, originalA := originalColor.RGBA()
+
+	// Convert the uint32 RGBA values to uint8 values
+	r := uint8(originalR / 0x101)
+	g := uint8(originalG / 0x101)
+	b := uint8(originalB / 0x101)
+	a := uint8(originalA / 0x101)
+
+	// Calculate the new RGB values by reducing the luminosity by 50%
+	newR := uint8(math.Max(float64(r)/2, 0))
+	newG := uint8(math.Max(float64(g)/2, 0))
+	newB := uint8(math.Max(float64(b)/2, 0))
+
+	// Create the new color with the updated RGB values
+	return color.RGBA{newR, newG, newB, a}
+}
+
 func DrawPcbToImage(pcb *Pcb, imgPath string, imgW, imgH int, sx, sy float64, netColors []color.Color) {
 
 	img := image.NewRGBA(image.Rect(0, 0, imgW, imgH))
@@ -241,8 +261,15 @@ func DrawPcbToImage(pcb *Pcb, imgPath string, imgW, imgH int, sx, sy float64, ne
 	gc.SetFontSize(50)
 
 	for i, edge := range pcb.Geometry.Edges {
-		color := netColors[pcb.Genome.Edges[i].Net%len(netColors)]
-		gc.SetFillColor(color)
+		cl := netColors[pcb.Genome.Edges[i].Net%len(netColors)]
+
+		if pcb.Genome.Edges[i].Plane == 0 {
+			gc.SetFillColor(cl)
+		} else {
+			gc.SetFillColor(reduceLuminosity(cl))
+			fmt.Println("HEHEHE")
+		}
+
 		draw.DrawPoly(gc, edge, sx, sy, true)
 	}
 
@@ -269,13 +296,13 @@ func DrawPcbToImage(pcb *Pcb, imgPath string, imgW, imgH int, sx, sy float64, ne
 
 }
 
-func EvaluatePcb(pcb *Pcb, minDist float64) float64 {
+func EvaluatePcb(pcb *Pcb, minDist float64, notSamePlaneIntersectionCost float64) float64 {
 
 	violatedConstraints := 0.0
 
 	for i1, n1 := range pcb.Geometry.Nodes {
 		for i2, n2 := range pcb.Geometry.Nodes {
-			if i1 != i2 && pcb.Genome.Nodes[i1].Component != pcb.Genome.Nodes[i1].Component {
+			if i1 != i2 && pcb.Genome.Nodes[i1].Component != pcb.Genome.Nodes[i2].Component {
 				if geo.PolyDistance(n1, n2) < minDist {
 					// fmt.Printf("nn %v %v\n", i1, i2)
 					violatedConstraints += 0.5
@@ -288,8 +315,12 @@ func EvaluatePcb(pcb *Pcb, minDist float64) float64 {
 		for i2, e2 := range pcb.Geometry.Edges {
 			if i1 != i2 {
 				if !(pcb.Genome.AreAdjacent(i1, i2)) && geo.PolyDistance(e1, e2) < minDist {
-					// fmt.Printf("ee %v %v %v\n", i1, i2, geo.PolyDistance(e1, e2))
-					violatedConstraints += 0.5
+					if pcb.Genome.Edges[i1].Plane == pcb.Genome.Edges[i2].Plane {
+						violatedConstraints += 0.5
+					} else {
+						violatedConstraints += notSamePlaneIntersectionCost / 2.0
+					}
+
 				}
 			}
 		}

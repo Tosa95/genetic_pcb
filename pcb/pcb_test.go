@@ -10,7 +10,7 @@ func runTest(t *testing.T, g pcb.Genome, expected float64) {
 
 	p.ComputeGeometry(10, 5)
 
-	res := pcb.EvaluatePcb(p, 10)
+	res := pcb.EvaluatePcb(p, 10, 0)
 
 	if res != expected {
 		t.Errorf("Expected %v, got %v", expected, res)
