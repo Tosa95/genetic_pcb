@@ -113,7 +113,7 @@ func main() {
 		0.1,
 		pgo,
 		10,
-		0.1,
+		0.01,
 	)
 
 	pcb.DrawPcbToImage(ga.CurrentPop[0].Individual, "first.png", int(maxX), int(maxY), 1, 1, netColors)

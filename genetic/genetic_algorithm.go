@@ -105,11 +105,12 @@ func (ga *GeneticAlgorithm[T]) generateChilds(inputChannel chan []int, outputCha
 
 	for parents := range inputChannel {
 		p1, p2 := parents[0], parents[1]
-		outputChannel <- ga.generateChild(p1, p2, c)
 
-		// if c.RandomGenerator.Float64() < ga.selfReproductionProb {
-		// 	ga.geneticOperators.Mutate(ga.CurrentPop[p1].Individual, c)
-		// }
+		if c.RandomGenerator.Float64() < ga.selfReproductionProb {
+			outputChannel <- ga.generateChild(p1, p1, c)
+		} else {
+			outputChannel <- ga.generateChild(p1, p2, c)
+		}
 
 	}
 }
