@@ -296,58 +296,6 @@ func DrawPcbToImage(pcb *Pcb, imgPath string, imgW, imgH int, sx, sy float64, ne
 
 }
 
-func EvaluatePcb(pcb *Pcb, minDist float64, notSamePlaneIntersectionCost float64) float64 {
-
-	violatedConstraints := 0.0
-
-	for i1, n1 := range pcb.Geometry.Nodes {
-		for i2, n2 := range pcb.Geometry.Nodes {
-			if i1 != i2 && pcb.Genome.Nodes[i1].Component != pcb.Genome.Nodes[i2].Component {
-				if geo.PolyDistance(n1, n2) < minDist {
-					// fmt.Printf("nn %v %v\n", i1, i2)
-					violatedConstraints += 0.5
-				}
-			}
-		}
-	}
-
-	for i1, e1 := range pcb.Geometry.Edges {
-		for i2, e2 := range pcb.Geometry.Edges {
-			if i1 != i2 {
-				if !(pcb.Genome.AreAdjacent(i1, i2)) && geo.PolyDistance(e1, e2) < minDist {
-					if pcb.Genome.Edges[i1].Plane == pcb.Genome.Edges[i2].Plane {
-						violatedConstraints += 0.5
-					} else {
-						violatedConstraints += notSamePlaneIntersectionCost / 2.0
-					}
-
-				}
-			}
-		}
-	}
-
-	for i1, n := range pcb.Geometry.Nodes {
-		for i2, e := range pcb.Geometry.Edges {
-			if !(pcb.Genome.IsNodeOnEdge(i1, i2)) && geo.PolyDistance(n, e) < minDist {
-				// fmt.Printf("ne %v %v %v %v\n", i1, i2, geo.PolyDistance(n, e), pcb.Genome.Edges[i2])
-				violatedConstraints += 1.0
-			}
-		}
-	}
-
-	for i1, c1 := range pcb.Geometry.Components {
-		for i2, c2 := range pcb.Geometry.Components {
-			if i1 != i2 && geo.PolyDistance(c1, c2) < minDist {
-				// fmt.Printf("ne %v %v %v %v\n", i1, i2, geo.PolyDistance(n, e), pcb.Genome.Edges[i2])
-				violatedConstraints += 1.0
-			}
-		}
-	}
-
-	return -violatedConstraints
-
-}
-
 func GetTotalPcbLength(pcb *Pcb) float64 {
 	res := 0.0
 

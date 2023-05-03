@@ -50,8 +50,8 @@ func main() {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	randomGenerator := rand.New(s1)
 
-	p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
-	// p1 := pcb.GeneratePcbFull(componentTemplates, 7, 3, maxX, maxY, randomGenerator)
+	// p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
+	p1 := pcb.GeneratePcbFull(componentTemplates, 7, 3, maxX, maxY, randomGenerator)
 	p2 := pcb.ScrumblePcb(p1, maxX, maxY)
 	pgo := pcb.NewPcbGeneticOperators(
 		1,
@@ -71,9 +71,14 @@ func main() {
 			RerouteEdgeMutationWeight:             10,
 			ChangePlaneMutationWeight:             10,
 		},
-		0.01, // was 0.01
-		0.9,
-		0.09,
+		pcb.EvaluationParams{
+			SamePlaneIntersectionWeight:      1.0,
+			DifferentPlaneIntersectionWeight: 0.9,
+			EdgeLengthWeight:                 0.01,
+			NonZeroPlaneEdgeWeight:           0.09,
+			OutOfBoundsWeight:                100,
+			MinDist:                          2,
+		},
 	)
 	ctx := genetic.NewGeneticContext()
 	c := pgo.CrossOver(p1, p2, ctx)

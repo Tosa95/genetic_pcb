@@ -6,20 +6,18 @@ import (
 )
 
 type PcbGeneticOperators struct {
-	fitnessExp                        float64
-	mutateProb                        float64
-	mutateSingleComponentProb         float64
-	minDist                           float64
-	maxX                              float64
-	maxY                              float64
-	nodeSz                            float64
-	edgeSz                            float64
-	localMutationMaxDelta             float64
-	edgeLengthPenalty                 float64
-	differentPlaneIntersectionPenalty float64
-	nonZeroPlaneEdgePenalty           float64
-	mutationWeights                   MutationWeights
-	mutationChooser                   mutationChooser
+	fitnessExp                float64
+	mutateProb                float64
+	mutateSingleComponentProb float64
+	minDist                   float64
+	maxX                      float64
+	maxY                      float64
+	nodeSz                    float64
+	edgeSz                    float64
+	localMutationMaxDelta     float64
+	mutationWeights           MutationWeights
+	evaluationParams          EvaluationParams
+	mutationChooser           mutationChooser
 }
 
 func NewPcbGeneticOperators(
@@ -33,25 +31,21 @@ func NewPcbGeneticOperators(
 	edgeSz float64,
 	localMutationMaxDelta float64,
 	mutationWeights MutationWeights,
-	edgeLengthPenalty float64,
-	differentPlaneIntersectionPenalty float64,
-	nonZeroPlaneEdgePenalty float64,
+	evaluationParams EvaluationParams,
 ) *PcbGeneticOperators {
 
 	pgo := PcbGeneticOperators{
-		fitnessExp:                        fitnessExp,
-		mutateProb:                        mutateProb,
-		mutateSingleComponentProb:         mutateSinglePointProb,
-		minDist:                           minDist,
-		maxX:                              maxX,
-		maxY:                              maxY,
-		nodeSz:                            nodeSz,
-		edgeSz:                            edgeSz,
-		localMutationMaxDelta:             localMutationMaxDelta,
-		mutationWeights:                   mutationWeights,
-		edgeLengthPenalty:                 edgeLengthPenalty,
-		differentPlaneIntersectionPenalty: differentPlaneIntersectionPenalty,
-		nonZeroPlaneEdgePenalty:           nonZeroPlaneEdgePenalty,
+		fitnessExp:                fitnessExp,
+		mutateProb:                mutateProb,
+		mutateSingleComponentProb: mutateSinglePointProb,
+		minDist:                   minDist,
+		maxX:                      maxX,
+		maxY:                      maxY,
+		nodeSz:                    nodeSz,
+		edgeSz:                    edgeSz,
+		localMutationMaxDelta:     localMutationMaxDelta,
+		mutationWeights:           mutationWeights,
+		evaluationParams:          evaluationParams,
 	}
 
 	pgo.mutationChooser = *pgo.buildMutationChooser()
@@ -59,23 +53,12 @@ func NewPcbGeneticOperators(
 	return &pgo
 }
 
-func (pgo *PcbGeneticOperators) getNonZeroPlaneEdgesCount(i *Pcb) int {
-	res := 0
-
-	for _, e := range i.Genome.Edges {
-		if e.Plane != 0 {
-			res += 1
-		}
-	}
-
-	return res
-}
-
 func (pgo *PcbGeneticOperators) Evaluate(i *Pcb, c *genetic.GeneticContext) float64 {
-	fitness := EvaluatePcb(i, pgo.minDist, pgo.differentPlaneIntersectionPenalty)
-	fitness -= (GetTotalPcbLength(i) / (pgo.maxX + pgo.maxY)) * pgo.edgeLengthPenalty
-	fitness -= float64(pgo.getNonZeroPlaneEdgesCount(i)) * pgo.nonZeroPlaneEdgePenalty
-	fitness = math.Pow(fitness, pgo.fitnessExp)
+	cost := pgo.EvaluatePcbIntersections(i)
+	cost += pgo.EvaluatePcbEdgeLengths(i)
+	cost += float64(pgo.getNonZeroPlaneEdgesCount(i))
+	cost = math.Pow(cost, pgo.fitnessExp)
+	fitness := -cost
 	return fitness
 }
 
@@ -124,12 +107,10 @@ func (pgo *PcbGeneticOperators) CrossOver(i1 *Pcb, i2 *Pcb, c *genetic.GeneticCo
 }
 
 func (pgo *PcbGeneticOperators) Mutate(i *Pcb, c *genetic.GeneticContext) {
-
 	if c.RandomGenerator.Float64() < pgo.mutateProb {
 		mutation := pgo.mutationChooser.Pick()
 		mutation(i, c)
 	}
-
 }
 
 func (pgo *PcbGeneticOperators) Grow(i *Pcb, c *genetic.GeneticContext) {
