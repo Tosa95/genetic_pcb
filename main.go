@@ -71,12 +71,12 @@ func main() {
 			ChangePlaneMutationWeight:             10,
 		},
 		pcb.EvaluationParams{
-			SamePlaneIntersectionWeight:      1.0,
-			DifferentPlaneIntersectionWeight: 0.9,
-			EdgeLengthWeight:                 0.01,
-			NonZeroPlaneEdgeWeight:           0.09,
-			OutOfBoundsWeight:                100,
-			MinDist:                          2,
+			SamePlaneIntersectionCost:      1.0,
+			DifferentPlaneIntersectionCost: 0.9,
+			EdgeLengthCost:                 0.01,
+			NonZeroPlaneEdgeCost:           0.09,
+			OutOfBoundsCost:                100,
+			MinDist:                        2,
 		},
 	)
 	ctx := genetic.NewGeneticContext()

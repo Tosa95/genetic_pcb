@@ -53,7 +53,8 @@ func NewPcbGeneticOperators(
 func (pgo *PcbGeneticOperators) Evaluate(i *Pcb, c *genetic.GeneticContext) float64 {
 	cost := pgo.EvaluatePcbIntersections(i)
 	cost += pgo.EvaluatePcbEdgeLengths(i)
-	cost += float64(pgo.EvaluateNonZeroPlaneEdges(i))
+	cost += pgo.EvaluateNonZeroPlaneEdges(i)
+	cost += pgo.EvaluateComponentsOutOfBounds(i)
 	cost = math.Pow(cost, pgo.fitnessExp)
 	fitness := -cost
 	return fitness

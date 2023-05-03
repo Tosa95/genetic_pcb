@@ -16,6 +16,17 @@ func isAtLeastOnePointContained(p1 *geom.Polygon, p2 *geom.Polygon) bool {
 	return false
 }
 
+func IsContained(p1 *geom.Polygon, p2 *geom.Polygon) bool {
+	for _, c := range p1.Coords() {
+		for _, pt := range c {
+			if !(xy.IsPointInRing(geom.XY, pt, p2.FlatCoords())) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func LineToPolyDist(lstart geom.Coord, lend geom.Coord, poly *geom.Polygon) float64 {
 	min := -1.0
 
