@@ -9,7 +9,6 @@ type PcbGeneticOperators struct {
 	fitnessExp                float64
 	mutateProb                float64
 	mutateSingleComponentProb float64
-	minDist                   float64
 	maxX                      float64
 	maxY                      float64
 	nodeSz                    float64
@@ -24,7 +23,6 @@ func NewPcbGeneticOperators(
 	fitnessExp float64,
 	mutateProb float64,
 	mutateSinglePointProb float64,
-	minDist float64,
 	maxX float64,
 	maxY float64,
 	nodeSz float64,
@@ -38,7 +36,6 @@ func NewPcbGeneticOperators(
 		fitnessExp:                fitnessExp,
 		mutateProb:                mutateProb,
 		mutateSingleComponentProb: mutateSinglePointProb,
-		minDist:                   minDist,
 		maxX:                      maxX,
 		maxY:                      maxY,
 		nodeSz:                    nodeSz,
@@ -56,7 +53,7 @@ func NewPcbGeneticOperators(
 func (pgo *PcbGeneticOperators) Evaluate(i *Pcb, c *genetic.GeneticContext) float64 {
 	cost := pgo.EvaluatePcbIntersections(i)
 	cost += pgo.EvaluatePcbEdgeLengths(i)
-	cost += float64(pgo.getNonZeroPlaneEdgesCount(i))
+	cost += float64(pgo.EvaluateNonZeroPlaneEdges(i))
 	cost = math.Pow(cost, pgo.fitnessExp)
 	fitness := -cost
 	return fitness

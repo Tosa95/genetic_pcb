@@ -20,7 +20,7 @@ func (pgo *PcbGeneticOperators) EvaluatePcbIntersections(pcb *Pcb) float64 {
 			if i1 != i2 && pcb.Genome.Nodes[i1].Component != pcb.Genome.Nodes[i2].Component {
 				if geo.PolyDistance(n1, n2) < pgo.evaluationParams.MinDist {
 					// fmt.Printf("nn %v %v\n", i1, i2)
-					violatedConstraints += 0.5
+					violatedConstraints += pgo.evaluationParams.SamePlaneIntersectionWeight / 2.0
 				}
 			}
 		}
@@ -31,7 +31,7 @@ func (pgo *PcbGeneticOperators) EvaluatePcbIntersections(pcb *Pcb) float64 {
 			if i1 != i2 {
 				if !(pcb.Genome.AreAdjacent(i1, i2)) && geo.PolyDistance(e1, e2) < pgo.evaluationParams.MinDist {
 					if pcb.Genome.Edges[i1].Plane == pcb.Genome.Edges[i2].Plane {
-						violatedConstraints += 0.5
+						violatedConstraints += pgo.evaluationParams.SamePlaneIntersectionWeight / 2.0
 					} else {
 						violatedConstraints += pgo.evaluationParams.DifferentPlaneIntersectionWeight / 2.0
 					}
@@ -45,7 +45,7 @@ func (pgo *PcbGeneticOperators) EvaluatePcbIntersections(pcb *Pcb) float64 {
 		for i2, e := range pcb.Geometry.Edges {
 			if !(pcb.Genome.IsNodeOnEdge(i1, i2)) && geo.PolyDistance(n, e) < pgo.evaluationParams.MinDist {
 				// fmt.Printf("ne %v %v %v %v\n", i1, i2, geo.PolyDistance(n, e), pcb.Genome.Edges[i2])
-				violatedConstraints += 1.0
+				violatedConstraints += pgo.evaluationParams.SamePlaneIntersectionWeight
 			}
 		}
 	}
@@ -54,7 +54,7 @@ func (pgo *PcbGeneticOperators) EvaluatePcbIntersections(pcb *Pcb) float64 {
 		for i2, c2 := range pcb.Geometry.Components {
 			if i1 != i2 && geo.PolyDistance(c1, c2) < pgo.evaluationParams.MinDist {
 				// fmt.Printf("ne %v %v %v %v\n", i1, i2, geo.PolyDistance(n, e), pcb.Genome.Edges[i2])
-				violatedConstraints += 1.0
+				violatedConstraints += pgo.evaluationParams.SamePlaneIntersectionWeight
 			}
 		}
 	}
