@@ -14,7 +14,7 @@ type PcbGeneticOperators struct {
 	nodeSz                    float64
 	edgeSz                    float64
 	localMutationMaxDelta     float64
-	mutationWeights           MutationWeights
+	mutationParams            MutationParams
 	evaluationParams          EvaluationParams
 	mutationChooser           mutationChooser
 }
@@ -28,7 +28,7 @@ func NewPcbGeneticOperators(
 	nodeSz float64,
 	edgeSz float64,
 	localMutationMaxDelta float64,
-	mutationWeights MutationWeights,
+	mutationParams MutationParams,
 	evaluationParams EvaluationParams,
 ) *PcbGeneticOperators {
 
@@ -41,7 +41,7 @@ func NewPcbGeneticOperators(
 		nodeSz:                    nodeSz,
 		edgeSz:                    edgeSz,
 		localMutationMaxDelta:     localMutationMaxDelta,
-		mutationWeights:           mutationWeights,
+		mutationParams:            mutationParams,
 		evaluationParams:          evaluationParams,
 	}
 

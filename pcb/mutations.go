@@ -12,23 +12,24 @@ import (
 type mutation = func(i *Pcb, c *genetic.GeneticContext)
 type mutationChooser = weightedrand.Chooser[mutation, int]
 
-type MutationWeights struct {
+type MutationParams struct {
 	GlobalMutationWeight                  int
 	TranslateComponentGroupMutationWeight int
 	RegenerateNetMutationWeight           int
 	RotateComponentMutationWeight         int
 	RerouteEdgeMutationWeight             int
 	ChangePlaneMutationWeight             int
+	EdgeBreakerComponent                  *Component
 }
 
 func (pgo *PcbGeneticOperators) buildMutationChooser() *mutationChooser {
 	chooser, _ := weightedrand.NewChooser(
-		weightedrand.NewChoice(pgo.globalMutation, pgo.mutationWeights.GlobalMutationWeight),
-		weightedrand.NewChoice(pgo.netMutation, pgo.mutationWeights.RegenerateNetMutationWeight),
-		weightedrand.NewChoice(pgo.translateComponentGroup, pgo.mutationWeights.TranslateComponentGroupMutationWeight),
-		weightedrand.NewChoice(pgo.rotateComponent, pgo.mutationWeights.RotateComponentMutationWeight),
-		weightedrand.NewChoice(pgo.rerouteEdge, pgo.mutationWeights.RerouteEdgeMutationWeight),
-		weightedrand.NewChoice(pgo.changePlane, pgo.mutationWeights.ChangePlaneMutationWeight),
+		weightedrand.NewChoice(pgo.globalMutation, pgo.mutationParams.GlobalMutationWeight),
+		weightedrand.NewChoice(pgo.netMutation, pgo.mutationParams.RegenerateNetMutationWeight),
+		weightedrand.NewChoice(pgo.translateComponentGroup, pgo.mutationParams.TranslateComponentGroupMutationWeight),
+		weightedrand.NewChoice(pgo.rotateComponent, pgo.mutationParams.RotateComponentMutationWeight),
+		weightedrand.NewChoice(pgo.rerouteEdge, pgo.mutationParams.RerouteEdgeMutationWeight),
+		weightedrand.NewChoice(pgo.changePlane, pgo.mutationParams.ChangePlaneMutationWeight),
 	)
 
 	return chooser
@@ -170,3 +171,30 @@ func (pgo *PcbGeneticOperators) changePlane(i *Pcb, c *genetic.GeneticContext) {
 		edge.Plane = 0
 	}
 }
+
+// func (pgo *PcbGeneticOperators) breakEdge(i *Pcb, c *genetic.GeneticContext) {
+// 	edgeIndex := c.RandomGenerator.Intn(len(i.Genome.Edges))
+// 	edge := &i.Genome.Edges[edgeIndex]
+
+// 	component := pgo.mutationParams.EdgeBreakerComponent.copy()
+
+// 	component.CX = c.RandomGenerator.Float64() * pgo.maxX
+// 	component.CY = c.RandomGenerator.Float64() * pgo.maxY
+
+// 	i.Genome.Components = append(i.Genome.Components, *component)
+
+// 	i.Genome.Nodes = append(i.Genome.Nodes, )
+
+// 	componentIndex = len(i.Genome.Components) - 1
+
+// 	edgesToAdd = []Edge {
+// 		{From: edge.From, To: }
+// 	}
+
+// 	i.Genome.Edges = append(
+// 		i.Genome.Edges[:edgeIndex],
+// 		i.Genome.Edges[edgeIndex+1:]...,
+// 	)
+
+// 	SortPcbEdges(i)
+// }

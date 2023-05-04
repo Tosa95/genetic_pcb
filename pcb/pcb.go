@@ -18,6 +18,13 @@ import (
 	"golang.org/x/image/font/gofont/goregular"
 )
 
+type ComponentKind int
+
+const (
+	REAL_COMPONENT ComponentKind = iota
+	EDGE_BREAKER_COMPONENT
+)
+
 type Node struct {
 	X         float64
 	Y         float64
@@ -50,6 +57,7 @@ type Component struct {
 	CX       float64
 	CY       float64
 	Rotation float64
+	Kind     ComponentKind
 }
 
 func (c *Component) copy() *Component {

@@ -5,12 +5,19 @@ import (
 	"genetic_pcb/genetic"
 	"genetic_pcb/pcb"
 	"image/color"
+	"log"
 	"math/rand"
+	"net/http"
+	_ "net/http/pprof"
 	"time"
 )
 
 func main() {
 	fmt.Println("Hi!")
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	maxX, maxY := 500.0, 500.0
 	nodeSz, edgeSz := 10.0, 5.0
@@ -34,6 +41,15 @@ func main() {
 			Y2:    10,
 		},
 	}
+
+	// fakeEdgeMovingComponent := &pcb.Component{
+	// 	Nodes: []pcb.ComponentNode{{DX: 0, DY: 0}},
+	// 	X1:    -5,
+	// 	Y1:    -5,
+	// 	X2:    5,
+	// 	Y2:    5,
+	// 	Kind:  pcb.EDGE_BREAKER_COMPONENT,
+	// }
 
 	netColors := []color.Color{
 		&color.RGBA{238, 79, 121, 255},  // Rosa
@@ -62,7 +78,7 @@ func main() {
 		nodeSz,
 		edgeSz,
 		50,
-		pcb.MutationWeights{
+		pcb.MutationParams{
 			GlobalMutationWeight:                  10,
 			RegenerateNetMutationWeight:           10,
 			TranslateComponentGroupMutationWeight: 10,

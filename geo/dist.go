@@ -6,13 +6,19 @@ import (
 )
 
 func isAtLeastOnePointContained(p1 *geom.Polygon, p2 *geom.Polygon) bool {
-	for _, c := range p1.Coords() {
-		for _, pt := range c {
-			if xy.IsPointInRing(geom.XY, pt, p2.FlatCoords()) {
-				return true
-			}
+	fc1 := p1.FlatCoords()
+	fc2 := p2.FlatCoords()
+	nCoords := len(fc1)
+
+	curr := geom.Coord{0.0, 0.0}
+
+	for i := 0; i < nCoords; i += 2 {
+		curr[0], curr[1] = fc1[i], fc1[i+1]
+		if xy.IsPointInRing(geom.XY, curr, fc2) {
+			return true
 		}
 	}
+
 	return false
 }
 
@@ -30,21 +36,25 @@ func IsContained(p1 *geom.Polygon, p2 *geom.Polygon) bool {
 func LineToPolyDist(lstart geom.Coord, lend geom.Coord, poly *geom.Polygon) float64 {
 	min := -1.0
 
-	for _, c := range poly.Coords() {
-		prev := c[0]
-		for _, curr := range c[1:] {
-			distance := xy.DistanceFromLineToLine(lstart, lend, prev, curr)
+	flatCoords := poly.FlatCoords()
+	nCoords := len(flatCoords)
 
-			if distance == 0 {
-				return 0
-			}
+	prev := geom.Coord{flatCoords[0], flatCoords[1]}
+	curr := geom.Coord{0.0, 0.0}
 
-			if min < 0 || distance < min {
-				min = distance
-			}
+	for i := 2; i < nCoords; i += 2 {
+		curr[0], curr[1] = flatCoords[i], flatCoords[i+1]
+		distance := xy.DistanceFromLineToLine(lstart, lend, prev, curr)
 
-			prev = curr
+		if distance == 0 {
+			return 0
 		}
+
+		if min < 0 || distance < min {
+			min = distance
+		}
+
+		prev = curr
 	}
 
 	return min
