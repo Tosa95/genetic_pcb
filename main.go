@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"time"
 )
 
@@ -66,8 +67,9 @@ func main() {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	randomGenerator := rand.New(s1)
 
-	p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
+	// p1 := pcb.GeneratePcbFull(componentTemplates, 20, 6, maxX, maxY, randomGenerator)
 	// p1 := pcb.GeneratePcbFull(componentTemplates, 7, 3, maxX, maxY, randomGenerator)
+	p1 := pcb.GeneratePcbFull(componentTemplates, 25, 10, maxX, maxY, randomGenerator)
 	p2 := pcb.ScrumblePcb(p1, maxX, maxY)
 	pgo := pcb.NewPcbGeneticOperators(
 		1,
@@ -138,10 +140,25 @@ func main() {
 
 	pcb.DrawPcbToImage(ga.CurrentPop[0].Individual, "first.png", int(maxX), int(maxY), 1, 1, netColors)
 
-	for i := 0; i < 5000; i++ {
+	prevValue := 0.0
+
+	for i := 0; i < 20000; i++ {
+		start := time.Now()
+
 		ga.ComputeNextGeneration()
 
-		pcb.DrawPcbToImage(ga.CurrentPop[0].Individual, "best.png", int(maxX), int(maxY), 1, 1, netColors)
+		elapsed := time.Since(start)
+
+		fmt.Printf("Generation time: %s\n", elapsed)
+
+		currValue := ga.CurrentPop[0].Fitness
+
+		if currValue != prevValue {
+			pcb.DrawPcbToImage(ga.CurrentPop[0].Individual, "best_nw.png", int(maxX), int(maxY), 1, 1, netColors)
+			os.Rename("best_nw.png", "best.png")
+
+			prevValue = currValue
+		}
 
 		fmt.Println(i)
 
